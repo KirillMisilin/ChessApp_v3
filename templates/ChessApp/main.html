@@ -1,0 +1,48 @@
+{% extends 'ChessApp/base.html' %}
+
+{% block info %}
+    <h1>Hehehe</h1>
+    {% if user.is_authenticated %}
+        <h1>Auth</h1>
+    {% endif %}
+
+    <div class="find_game" id="find_game1">
+        <h3>Find game</h3>
+    </div>
+
+    <script>
+        div = document.getElementById("find_game1");
+        //let url = `http://${window.location.host}`;
+        //div.onclick = function(){
+            //$.ajax({
+                //method: 'POST',
+                //data: {
+                    //user: '{{ user.get_username }}',
+                    //type: "find_game",
+                    //csrfmiddlewaretoken: '{{ csrf_token }}'
+                //},
+                //url: url
+            //});
+        //}
+
+        let url = `ws://${window.location.host}/ws/socket-server/`;
+        console.log(`${window.location.host}`);
+        const socket = new WebSocket(url);
+
+        socket.onmessage = function(e){  // что делать при получении данных
+            let data = JSON.parse(e.data);
+            console.log(data);
+            console.log(data['game_id']);
+            if (data['type'] == "start_game"){
+                window.location.href = `http://${window.location.host}/play?game_id=${data['game_id']}`;
+            }
+        };
+
+        div.onclick = function(){
+            socket.send(JSON.stringify({
+                user: '{{ user.get_username }}',
+                type: "find_game"
+            }));
+        }
+    </script>
+{% endblock %}

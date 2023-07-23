@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hello</title>
+    <script src="{% static 'scripts/scripts_final.js' %}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js" integrity="sha512-57oZ/vW8ANMjR/KQ6Be9v/+/h6bq9/l3f0Oc7vn6qMqyhvPd1cvKBRWWpzu0QoneImqr2SkmO4MSqU+RpHom3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        div { position:absolute;}
+        .chessboard { position : absolute; left:300px; top:50px; width:480px; height:480px;}
+        .piece { width:57px; height:57px;}
+        .element1 { solid black;width:60px; height:60px;}
+        .element2 { solid black;width:60px; height:60px;}
+        .info {width:140px;}
+        .moves {width:140px;}
+        .user {position : absolute; left:900px; top:50px;}
+    </style>
+</head>
+
+
+<body>
+    <div class="topnav">
+        <a class="active" href="/">Home</a>
+        <a href="register">Register</a>
+        <a href="play">Play</a>
+        <a href="login">Login</a>
+        <a href="exit">Exit</a>
+    </div>
+
+    <div class="user">
+        {% if user.is_authenticated %}
+            <h3> {{ user.get_username }} </h3>
+        {% endif %}
+        <h3>Player white: {{ player_white }}</h3>
+        <h3>Player black: {{ player_black }}</h3>
+    </div>
+
+    <form id="form">
+        <input type="text" name="message"/>
+    </form>
+
+    <div id="messages">
+
+    </div>
+
+    <script type="text/javascript">
+        let url = `ws://${window.location.host}/ws/socket-server/play/`;
+        console.log(`${window.location.host}`);
+
+        const chatSocket = new WebSocket(url);
+
+        chatSocket.onmessage = function(e){  // что делать при получении данных
+            let data = JSON.parse(e.data);
+            //console.log('Data:', data);
+            //console.log(e.data['response']);
+            //console.log(data['response']);
+            if (window.reversed_board == "true"){
+                data['response']['coordinate_y'] = 7 - data['response']['coordinate_y']
+            }
+            let response = JSON.stringify(data['response']);
+            //console.log(response);
+            update_piece_position(response);
+            //if (data.type === 'chat'){
+                //let message = document.getElementById('messages');
+
+                //messages.insertAdjacentHTML('beforeend', `<div>
+                    //<p>${data.message}</p>
+                    //</div>`);
+            //}
+        }
+    </script>
+
+    <script>
+        var reversed_board = "false";
+        var game_id = '{{ game_id }}';
+
+        chatSocket.onopen = () => chatSocket.send(JSON.stringify({
+             game_id: '{{ game_id }}',
+             'type': "start_game",
+        }));
+
+        $( function() {
+            let options = {
+                root: document.querySelector('.chessboard'),
+                rootMargin: '5px',
+                threshold: 0.1
+            }
+            start_position(reversed_board);
+            if ('{{ player_white }}' == '{{ user.get_username }}'){
+                $('.element1').draggable();
+            }
+            if ('{{ player_black }}' == '{{ user.get_username }}'){
+                $('.element2').draggable();
+            }
+            //$('.element1,.element2').draggable();
+        });
+    </script>
+
+    <script>
+        let move = function(id){
+            //console.log(window.location.search.replace( '?', ''));
+            let url = "http://127.0.0.1:8000";
+            let board = document.querySelector(".chessboard");
+            let elem = document.querySelector("#" + id);
+            let coordinates = elem.getBoundingClientRect();
+            //console.log(coordinates);
+            let board_coordinates = board.getBoundingClientRect();
+            //console.log(board_coordinates);
+            //console.log(Math.abs(Math.round((coordinates.y - board_coordinates.y) / 60)));
+            //console.log(elem);
+            let coordinate_x = Math.abs(Math.round((coordinates.x - board_coordinates.x) / 60));
+            let coordinate_y = Math.abs(Math.round((coordinates.y - board_coordinates.y) / 60));
+            //console.log(coordinate_x, coordinate_y);
+            //console.log(elem.getAttribute("old_coordinates_x"));
+            if ((String(coordinate_x) == elem.getAttribute("old_coordinates_x")
+                && String(coordinate_y) == elem.getAttribute("old_coordinates_y"))
+                || coordinate_x < 0 || coordinate_x > 7 || coordinate_y < 0 || coordinate_y > 7)
+            {
+                //console.log("same");
+                elem.style.left = elem.getAttribute("old_coordinates_x") * 60 + "px";
+                elem.style.top = elem.getAttribute("old_coordinates_y") * 60 + "px";
+            }
+            else{
+                if (window.reversed_board == "true"){
+                    coordinate_y = 7 - coordinate_y
+                }
+                chatSocket.send(JSON.stringify({
+                    game_id: '{{ game_id }}',
+                    'message': 'Chess_message',
+                    'type': "make_move",
+                    'piece': id, //какой фигурой ходим
+                    'coordinate_x': coordinate_x,
+                    'coordinate_y': coordinate_y,
+                }));
+
+                //$.ajax({
+                    //method: "POST",
+                    //data: {
+                        //type: "make_move",
+                        //piece: id, //какой фигурой ходим
+                        //coordinate_x: coordinate_x,
+                        //coordinate_y: coordinate_y,
+                        //csrfmiddlewaretoken: '{{ csrf_token }}'
+                    //},
+                    //success: function(response){
+                        //update_piece_position(response);
+                    //},
+                    //url: url,
+                //});
+                elem.style.zIndex = "0";
+            }
+        }
+    </script>
+
+    <script>
+        let click_on_move = function(last_move, move_counter, piece_color){
+            console.log(game_id)
+            let url = `http://${window.location.host}/play`;
+            let board = document.querySelector(".chessboard");
+            $.ajax({
+                method: "POST",
+                data: {
+                    type: "get_position",
+                    game_id: '{{ game_id }}',
+                    last_move: last_move,
+                    move_counter: move_counter,
+                    piece_color: piece_color,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(response){
+                    response = JSON.parse(response);
+                    let piece = response[0];
+                    //let piece_to_delete = response[0][0];
+                    console.log(response);
+                    for (i=0; i<32; i++){
+                        piece = response[i];
+                        if (window.reversed_board == "true"){
+                            piece[1][1] = 7 - piece[1][1];
+                        }
+                        let piece_div = document.querySelector("#" + piece[0])
+                        //console.log(piece_div);
+                        //console.log(!piece[2]);
+                        if (piece_div){
+                            if (!piece[2]){
+                                //console.log(piece[1]);
+                                piece_div.style.left = piece[1][0] * 60 + "px";
+                                piece_div.style.top = piece[1][1] * 60 + "px";
+                            }
+                            else{
+                                board.removeChild(piece_div);
+                            }
+                        }
+                        else{
+                            if (!piece[2]){
+                                let div = document.createElement("div");
+                                div.setAttribute("class", "element2");
+                                let id = piece[0];
+                                div.setAttribute("id", id);
+                                div.setAttribute("onclick", "move(id)");
+                                div.setAttribute("onmousedown", "moving(id)");
+                                div.style.left = piece[1][0] * 60 + "px";
+                                div.style.top = piece[1][1] * 60 + "px";
+
+                                let image = document.createElement("img");
+                                if (parseInt(id[id.length-1])){
+                                    src = id.slice(0, id.length-1);
+                                }
+                                else{
+                                    src = id.slice(0, id.length);
+                                }
+                                image.src = "/static/images/" + src + ".png";
+                                console.log(src);
+                                image.setAttribute("class", "piece");
+
+                                div.appendChild(image);
+                                let chessboard = document.querySelector(".chessboard")
+                                chessboard.appendChild(div);
+                            }
+                        }
+                    }
+                },
+                url: url
+            });
+        }
+    </script>
+
+
+    <div class="chessboard">
+        <img src="{% static 'images/clear_board.jpg' %}">
+        <div class="element2" onclick="move('queen_black')" onmousedown="moving('queen_black')" id="queen_black">
+            <img src="{% static 'images/queen_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('king_black')" onmousedown="moving('king_black')" id="king_black">
+            <img src="{% static 'images/king_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('bishop_black1')" onmousedown="moving('bishop_black1')" id="bishop_black1">
+            <img src="{% static 'images/bishop_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('bishop_black2')" onmousedown="moving('bishop_black2')" id="bishop_black2">
+            <img src="{% static 'images/bishop_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('knight_black1')" onmousedown="moving('knight_black1')" id="knight_black1">
+            <img src="{% static 'images/knight_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('knight_black2')" onmousedown="moving('knight_black2')" id="knight_black2">
+            <img src="{% static 'images/knight_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('rook_black1')" onmousedown="moving('rook_black1')" id="rook_black1">
+            <img src="{% static 'images/rook_black.png' %}" class="piece"> </div>
+        <div class="element2" onclick="move('rook_black2')" onmousedown="moving('rook_black2')" id="rook_black2">
+            <img src="{% static 'images/rook_black.png' %}" class="piece"> </div>
+
+
+        <div class="element1" onclick="move('queen_white')" onmousedown="moving('queen_white')" id="queen_white">
+            <img src="{% static 'images/queen_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('king_white')" onmousedown="moving('king_white')" id="king_white">
+            <img src="{% static 'images/king_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('bishop_white2')" onmousedown="moving('bishop_white2')" id="bishop_white2">
+            <img src="{% static 'images/bishop_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('bishop_white1')" onmousedown="moving('bishop_white1')" id="bishop_white1">
+            <img src="{% static 'images/bishop_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('knight_white1')" onmousedown="moving('knight_white1')" id="knight_white1">
+            <img src="{% static 'images/knight_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('knight_white2')" onmousedown="moving('knight_white2')" id="knight_white2">
+            <img src="{% static 'images/knight_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('rook_white1')" onmousedown="moving('rook_white1')" id="rook_white1">
+            <img src="{% static 'images/rook_white.png' %}" class="piece"> </div>
+        <div class="element1" onclick="move('rook_white2')" onmousedown="moving('rook_white2')" id="rook_white2">
+            <img src="{% static 'images/rook_white.png' %}" class="piece"> </div>
+    </div>
+
+    <div class="info">
+        <h1>game id: {{ game_id }}</h1>
+        <div class="moves"></div>
+    </div>
+
+</body>
+</html>
