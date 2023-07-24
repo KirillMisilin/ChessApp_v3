@@ -14,7 +14,7 @@ class ChessConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        print("qwe3")
+
         self.accept()
 
     def receive(self, text_data=None, bytes_data=None):
