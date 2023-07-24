@@ -14,6 +14,7 @@ class ChessConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        print('qwe')
 
         self.accept()
 
