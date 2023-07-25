@@ -87,6 +87,9 @@
                 rootMargin: '5px',
                 threshold: 0.1
             }
+            if ('{{ player_black }}' == '{{ user.get_username }}'){
+                reversed_board = "true";
+            }
             start_position(reversed_board);
             if ('{{ player_white }}' == '{{ user.get_username }}'){
                 $('.element1').draggable();

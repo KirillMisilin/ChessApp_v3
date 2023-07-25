@@ -14,7 +14,6 @@ class ChessConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        print("develop")
 
         self.accept()
 
