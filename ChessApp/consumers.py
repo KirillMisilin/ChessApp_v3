@@ -32,7 +32,7 @@ class ChessConsumer(WebsocketConsumer):
                     'type': 'chat_message',
                     'text': "text2",
                     'message': message,
-                    'game': game
+                    'game_response': game.response
                 }
             )
         if request['type'] == "start_game":
@@ -49,7 +49,7 @@ class ChessConsumer(WebsocketConsumer):
             'type': 'chat',
             'text': event['text'],
             'message': event['message'],
-            'response': event['game'].response
+            'response': event['game_response']
         }))
 
 
