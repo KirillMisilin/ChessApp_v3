@@ -251,6 +251,7 @@ class Game:
                     piece_object.has_taken = True
                     promotion = [True, piece_object.name, queen_name, piece_object.color]
                     piece_object = self.__dict__[queen_name]
+                    self.__dict__[piece_object.color + "_pieces"].append(self.__dict__[queen_name])
 
                 piece_to_delete = self.current_position[coordinate_x][coordinate_y]
                 piece_to_delete.has_taken = True
@@ -362,9 +363,18 @@ class Game:
         for move in moves_from_db:
             prepared_move = [move.piece, [int(move.old_position[0]), int(move.old_position[1])],
                              [int(move.new_position[0]), int(move.new_position[1])]]
-            print(prepared_move)
+            # print(prepared_move)
             response = game2.make_move(prepared_move)
+
         pieces = []
+        if self.number_of_white_queens > 1:
+            for i in range(2, self.number_of_white_queens + 1):
+                if not hasattr(game2, "queen_white" + str(i)):
+                    pieces.append(["queen_white" + str(i), [7, 7], True])
+        if self.number_of_black_queens > 1:
+            for i in range(2, self.number_of_black_queens + 1):
+                if not hasattr(game2, "queen_black" + str(i)):
+                    pieces.append(["queen_black" + str(i), [7, 7], True])
         for piece in game2.black_pieces + game2.black_pawns + game2.white_pieces + game2.white_pawns:
             pieces.append([piece.name, piece.position, piece.has_taken])
         return pieces
