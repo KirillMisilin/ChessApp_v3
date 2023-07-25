@@ -220,6 +220,7 @@ class Game:
             piece = request.POST['piece']
             piece_object = self.__getattribute__(piece)
 
+        initial_piece = piece_object
         old_piece_position = piece_object.position.copy()
         old_piece_has_not_moved = piece_object.has_not_moved
         old_current_position = copy.deepcopy(self.current_position)
@@ -285,6 +286,7 @@ class Game:
 
         response = {
             'piece': piece_object.name,
+            'initial_piece': initial_piece.name,
             'piece_color': piece_object.color,
             'coordinate_x': piece_object.position[0],
             'coordinate_y': piece_object.position[1],
@@ -302,7 +304,7 @@ class Game:
 
     def save_in_db(self, response):
         if self.move_has_made:
-            piece_object = self.__getattribute__(response['piece'])
+            piece_object = self.__getattribute__(response['initial_piece'])
             old_position_alt = piece_object.get_position_alt(response['old_position'])
             takes_str = "" if response['piece_to_delete'] == "empty_square" else "X"
             is_check = "+" if response['is_check'] else ""
@@ -359,12 +361,12 @@ class Game:
         piece_names_to_delete = []
         for move in moves_from_db:
             prepared_move = [move.piece, [int(move.old_position[0]), int(move.old_position[1])],
-                              [int(move.new_position[0]), int(move.new_position[1])]]
+                             [int(move.new_position[0]), int(move.new_position[1])]]
+            print(prepared_move)
             response = game2.make_move(prepared_move)
         pieces = []
         for piece in game2.black_pieces + game2.black_pawns + game2.white_pieces + game2.white_pawns:
             pieces.append([piece.name, piece.position, piece.has_taken])
         return pieces
-
 
 # game = Game("Biba", "Boba")

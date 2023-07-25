@@ -57,7 +57,8 @@
             //console.log(e.data['response']);
             //console.log(data['response']);
             if (window.reversed_board == "true"){
-                data['response']['coordinate_y'] = 7 - data['response']['coordinate_y']
+                data['response']['coordinate_y'] = 7 - data['response']['coordinate_y'];
+                data['response']['castling_coordinate_y'] = 7 - data['response']['castling_coordinate_y'];
             }
             let response = JSON.stringify(data['response']);
             //console.log(response);
