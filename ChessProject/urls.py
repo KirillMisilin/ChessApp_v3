@@ -7,5 +7,6 @@ urlpatterns = [
     path('register/', include('ChessApp.urls')),
     path('play', include('ChessApp.urls')),
     path('login', include('ChessApp.urls')),
-    path('exit', include('ChessApp.urls'))
+    path('exit', include('ChessApp.urls')),
+    path('profile', include('ChessApp.urls'))
 ]

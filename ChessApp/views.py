@@ -36,6 +36,15 @@ def index_page(request):
     return render(request, 'ChessApp/play.html', data)
 
 
+def profile(request):
+    username = request.user.username
+    games = Gamedb.objects.filter(player_white_username=username) | Gamedb.objects.filter(player_black_username=username)
+    data = {
+        'username': username
+    }
+    return render(request, 'ChessApp/profile.html', data)
+
+
 def register(request):
     if request.method == 'POST':
         # print(request.POST)
