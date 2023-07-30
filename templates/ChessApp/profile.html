@@ -5,5 +5,17 @@
 
     <div id="games">
         <h3>Games</h3>
+        {% for game_id in game_ids %}
+            <div class="game">
+                <h3>{{ game_id }}</h3>
+                {{ request.get_full_path }}
+            </div>
+        {% endfor %}
     </div>
+
+    <script>
+    let div_games = document.querySelector(".game");
+    //div_games.innerHTML += {{ game_ids }};
+    //console.log(div_games);
+</script>
 {% endblock %}

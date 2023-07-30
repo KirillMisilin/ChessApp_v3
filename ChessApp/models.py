@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 class Game(models.Model):
     player_white_username = models.CharField(max_length=100)
     player_black_username = models.CharField(max_length=100)
+    result = models.CharField(max_length=100, default="Unknown")
+    date = models.DateField(auto_now_add=True)
+    time = models.TimeField(auto_now_add=True)
 
 
 class Move(models.Model):

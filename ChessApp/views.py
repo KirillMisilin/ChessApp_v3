@@ -38,9 +38,14 @@ def index_page(request):
 
 def profile(request):
     username = request.user.username
+    game_ids = []
     games = Gamedb.objects.filter(player_white_username=username) | Gamedb.objects.filter(player_black_username=username)
+    for game in games:
+        game_ids.append(game.id)
+    # print(game_ids)
     data = {
-        'username': username
+        'username': username,
+        'game_ids': game_ids
     }
     return render(request, 'ChessApp/profile.html', data)
 
