@@ -36,6 +36,11 @@ def index_page(request):
     return render(request, 'ChessApp/play.html', data)
 
 
+def game_view(request):
+
+    return render(request, 'ChessApp/game.html')
+
+
 def profile(request):
     username = request.user.username
     game_ids = []
