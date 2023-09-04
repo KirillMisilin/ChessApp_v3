@@ -6,3 +6,34 @@
 {% endblock %}
 
 
+{% block what_is_draggable %}
+    start_position(reversed_board);
+    //$('.element1,.element2').draggable();
+{% endblock %}
+
+{% block move_send_message %}
+    $.ajax({
+        method: "POST",
+        data: {
+            type: "make_move",
+            piece: id, //какой фигурой ходим
+            coordinate_x: coordinate_x,
+            coordinate_y: coordinate_y,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+        success: function(response){
+            update_piece_position(response);
+        },
+        url: url,
+    });
+{% endblock %}
+
+{% block game %}
+    {{ response }}
+    <script>
+        let response = new Array();
+        response = {{ response }};
+        //response = JSON.parse(response);
+        console.log({{ response }});
+    </script>
+{% endblock %}

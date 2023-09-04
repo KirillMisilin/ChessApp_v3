@@ -1,16 +1,19 @@
 from .Pieces import *
 from .models import Game as Gamedb, Move
 import copy
+from .Games import gameDict, gameHistoryDict
 
 
 class Game:
 
-    def __init__(self, player_white='Boba', player_black='Biba'):
+    def __init__(self, player_white='Boba', player_black='Biba', new_game=True):
         self.player_white = player_white
         self.player_black = player_black
 
-        self.gamedb = Gamedb(player_white_username=self.player_white, player_black_username=self.player_black)
-        self.gamedb.save()
+        self.new_game = new_game
+        if self.new_game:
+            self.gamedb = Gamedb(player_white_username=self.player_white, player_black_username=self.player_black)
+            self.gamedb.save()
 
         self.rook_black1 = Rook("rook_black1", [0, 0])
         self.rook_black2 = Rook("rook_black2", [7, 0])
@@ -338,9 +341,10 @@ class Game:
         new_position = [int(self.board_dict_inv[new_position[0]]), 8 - int(new_position[1])]
         return [piece, old_position, new_position]
 
-    def run(self, request):
+    def run(self, request, have_to_save=True):
         response = self.make_move(request)
-        self.save_in_db(response)
+        if have_to_save:
+            self.save_in_db(response)
 
         all_moves = []
         moves_from_db = Move.objects.filter(game_id=self.gamedb.id)
@@ -352,12 +356,16 @@ class Game:
         self.response = response
         return response
 
-    def get_position_from_db(self, request):
-        target_move = Move.objects.get(game_id=request.POST['game_id'],
-                                       move=request.POST['last_move'],
-                                       who_to_move=request.POST['piece_color'],
-                                       move_counter=request.POST['move_counter'])
-        moves_from_db = Move.objects.filter(game_id=request.POST['game_id'], move_counter__lte=target_move.move_counter)
+    def get_position_from_db(self, request, last_move=False):
+        print(last_move)
+        if not last_move:
+            target_move = Move.objects.get(game_id=request.POST['game_id'],
+                                           move=request.POST['last_move'],
+                                           who_to_move=request.POST['piece_color'],
+                                           move_counter=request.POST['move_counter'])
+        else:
+            target_move = request
+        moves_from_db = Move.objects.filter(game_id=target_move.game_id, move_counter__lte=target_move.move_counter)
         game2 = Game()
         piece_names_to_delete = []
         for move in moves_from_db:
@@ -365,7 +373,7 @@ class Game:
                              [int(move.new_position[0]), int(move.new_position[1])]]
             # print(prepared_move)
             response = game2.make_move(prepared_move)
-
+        # print([game2.current_position[i][j].name for i in range(0, 8) for j in range(0, 8)])
         pieces = []
         if self.number_of_white_queens > 1:
             for i in range(2, self.number_of_white_queens + 1):
@@ -377,6 +385,10 @@ class Game:
                     pieces.append(["queen_black" + str(i), [7, 7], True])
         for piece in game2.black_pieces + game2.black_pawns + game2.white_pieces + game2.white_pawns:
             pieces.append([piece.name, piece.position, piece.has_taken])
+        # print(gameDict.games)
+        # if self.new_game:
+        # gameDict.games.update({str(self.gamedb.id): game2})
+        # print(gameDict.games)
         return pieces
 
 # game = Game("Biba", "Boba")

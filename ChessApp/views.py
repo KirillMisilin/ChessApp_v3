@@ -5,7 +5,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from .Game import Game
-from .Games import gameDict
+from .Games import gameDict, gameHistoryDict
 from .models import Game as Gamedb, Move
 import json
 
@@ -15,10 +15,11 @@ def index_page(request):
     if request.method == 'POST':
         game_id = request.POST['game_id']
         game = gameDict.games[str(game_id)]
+        # print(hash(game))
         if request.POST['type'] == "make_move":
             # print("running")
             # game.make_move(request)
-            response = game.run(request)
+            response = game.run(request, True)
             return HttpResponse(json.dumps(response))
         if request.POST['type'] == "get_position":
             # print(game.queen_black.position)
@@ -36,9 +37,35 @@ def index_page(request):
     return render(request, 'ChessApp/play.html', data)
 
 
+# недоделана
 def game_view(request):
-
-    return render(request, 'ChessApp/game.html')
+    username = request.user.username
+    if request.method == 'GET':
+        game_id = request.GET.get("game_id", 1000)
+        game_db = Gamedb.objects.get(id=game_id)
+        moves_from_db = Move.objects.filter(game_id=game_id)
+        # for move in moves_from_db:
+            # print(move.move)
+        last_move = moves_from_db[0]
+        # print(last_move)
+        for move in moves_from_db:
+            if move.move_counter >= last_move.move_counter:
+                last_move = move
+        game = Game(new_game=False)
+        response = game.get_position_from_db(request=last_move, last_move=True)
+        print(response)
+        # response = json.dumps(response)
+        # return HttpResponse(json.dumps(response))
+        # response = game.get_position_from_db()
+        # all_moves = []
+        # moves_from_db = Move.objects.filter(game_id=game_id)
+        # for move in moves_from_db:
+            # all_moves.append(move.move)
+        # game_db = Gamedb.objects.get(game_id=game_id)
+        # game = Game(player_white=game_db.player_white_username, player_black=game_db.player_black_username,
+                    # new_game=False)
+        # gameHistoryDict.add_game(hash(game), game)
+        return render(request, 'ChessApp/game.html', {'response': response})
 
 
 def profile(request):
@@ -100,8 +127,9 @@ def logout_view(request):
 
 
 def main(request):
+    # print(request.META)
     if request.method == 'POST':
-        print(request.POST)
+        # print(request.POST)
         return redirect('/')
     else:
         return render(request, 'ChessApp/main.html')

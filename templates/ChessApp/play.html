@@ -6,6 +6,20 @@
 {% endblock %}
 
 
+{% block what_is_draggable %}
+        if ('{{ player_black }}' == '{{ user.get_username }}'){
+                reversed_board = "true";
+            }
+            start_position(reversed_board);
+            if ('{{ player_white }}' == '{{ user.get_username }}'){
+                $('.element1').draggable();
+            }
+            if ('{{ player_black }}' == '{{ user.get_username }}'){
+                $('.element2').draggable();
+            }
+{% endblock %}
+
+
 {% block game %}
 
     <div class="user">
@@ -16,11 +30,38 @@
         <h3>Player black: {{ player_black }}</h3>
     </div>
 
-    <form id="form">
-        <input type="text" name="message"/>
-    </form>
 
-    <div id="messages">
-    </div>
+    <script type="text/javascript">
+        let url = `ws://${window.location.host}/ws/socket-server/play/`;
+        console.log(`${window.location.host}`);
 
+        const chatSocket = new WebSocket(url);
+
+        chatSocket.onmessage = function(e){  // что делать при получении данных
+            let data = JSON.parse(e.data);
+            if (window.reversed_board == "true"){
+                data['response']['coordinate_y'] = 7 - data['response']['coordinate_y'];
+                data['response']['castling_coordinate_y'] = 7 - data['response']['castling_coordinate_y'];
+            }
+            let response = JSON.stringify(data['response']);
+            update_piece_position(response);
+        }
+
+        chatSocket.onopen = () => chatSocket.send(JSON.stringify({
+             game_id: '{{ game_id }}',
+             'type': "start_game",
+        }));
+    </script>
+
+{% endblock %}
+
+{% block move_send_message %}
+                chatSocket.send(JSON.stringify({
+                    game_id: '{{ game_id }}',
+                    'message': 'Chess_message',
+                    'type': "make_move",
+                    'piece': id, //какой фигурой ходим
+                    'coordinate_x': coordinate_x,
+                    'coordinate_y': coordinate_y,
+                }));
 {% endblock %}

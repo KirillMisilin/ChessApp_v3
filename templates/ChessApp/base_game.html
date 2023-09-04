@@ -30,31 +30,15 @@
         <a href="exit">Exit</a>
     </div>
 
-    <script type="text/javascript">
-        let url = `ws://${window.location.host}/ws/socket-server/play/`;
-        console.log(`${window.location.host}`);
+    <form id="form">
+        <input type="text" name="message"/>
+    </form>
 
-        const chatSocket = new WebSocket(url);
-
-        chatSocket.onmessage = function(e){  // что делать при получении данных
-            let data = JSON.parse(e.data);
-            if (window.reversed_board == "true"){
-                data['response']['coordinate_y'] = 7 - data['response']['coordinate_y'];
-                data['response']['castling_coordinate_y'] = 7 - data['response']['castling_coordinate_y'];
-            }
-            let response = JSON.stringify(data['response']);
-            update_piece_position(response);
-        }
-    </script>
+    <div id="messages"></div>
 
     <script>
         var reversed_board = "false";
         var game_id = '{{ game_id }}';
-
-        chatSocket.onopen = () => chatSocket.send(JSON.stringify({
-             game_id: '{{ game_id }}',
-             'type': "start_game",
-        }));
 
         $( function() {
             let options = {
@@ -62,16 +46,8 @@
                 rootMargin: '5px',
                 threshold: 0.1
             }
-            if ('{{ player_black }}' == '{{ user.get_username }}'){
-                reversed_board = "true";
-            }
-            start_position(reversed_board);
-            if ('{{ player_white }}' == '{{ user.get_username }}'){
-                $('.element1').draggable();
-            }
-            if ('{{ player_black }}' == '{{ user.get_username }}'){
-                $('.element2').draggable();
-            }
+            {% block what_is_draggable %}
+            {% endblock %}
             //$('.element1,.element2').draggable();
         });
     </script>
@@ -96,14 +72,10 @@
                 if (window.reversed_board == "true"){
                     coordinate_y = 7 - coordinate_y
                 }
-                chatSocket.send(JSON.stringify({
-                    game_id: '{{ game_id }}',
-                    'message': 'Chess_message',
-                    'type': "make_move",
-                    'piece': id, //какой фигурой ходим
-                    'coordinate_x': coordinate_x,
-                    'coordinate_y': coordinate_y,
-                }));
+
+                {% block move_send_message %}
+                {% endblock %}
+
 
                 //$.ajax({
                     //method: "POST",

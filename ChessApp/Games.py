@@ -7,4 +7,4 @@ class GameDict:
 
 
 gameDict = GameDict()
-
+gameHistoryDict = GameDict()
